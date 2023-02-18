@@ -39,6 +39,7 @@ int main()
     bool view = false;
     bool error = false;
     bool create = false;
+    bool remove = false;
     while (true)
     {
 
@@ -52,15 +53,16 @@ int main()
             cout << "view dirs - Показать подкаталоги по текущему пути\n";
             cout << "view files - Показать файлы по текущему пути\n";
             cout << "create {name} - Создать каталог с указанным именем по текущему пути\n";
+            cout << "remove {name} - Удалить каталог с указанным именем по текущему пути (для точно удаления папки используйте предварительно коману view dirs)\n";
             cout << "exit - выход из проекта\n";
             cout << "Введите команду:\n";  
             cin >> command;
         }
-        if (cd || view || create)
+        if (cd || view || create || remove)
         { 
             cin >> command;
         }
-        if (command != "cd" && !cd && !error && !view && !create && command != "view" && command != "create")
+        if (command != "remove" && command != "cd" && !cd && !remove && !error && !view && !create && command != "view" && command != "create")
         {
             SetConsoleTextAttribute(handle, FOREGROUND_RED);
             cout << "Такой команды не существует\n";
@@ -82,7 +84,7 @@ int main()
             {
                 for (auto const& dir_entry : std::filesystem::directory_iterator{ dir.path()})
                 {
-                    if (!dir_entry.path().has_extension())
+                    if (dir_entry.is_directory())
                         std::cout << dir_entry.path() << '\n';
                 }
             }
@@ -90,7 +92,7 @@ int main()
             {
                 for (auto const& dir_entry : std::filesystem::directory_iterator{ dir.path() })
                 {
-                    if (dir_entry.path().has_extension())
+                    if (!dir_entry.is_directory())
                         std::cout << dir_entry.path() << '\n';
                 }
             }
@@ -126,6 +128,23 @@ int main()
             pbuf.~path();
             create = false;
         }
+        if (remove)
+        {
+            fs::path pbuf;
+            for (auto const& dir_entry : std::filesystem::directory_iterator{ dir.path() })
+            {
+                if (dir_entry.is_directory() && dir_entry.path().filename() == command)
+                    pbuf = dir_entry.path();
+                
+            } 
+            fs::remove_all(pbuf);
+            pbuf.~path();
+            remove = false;
+        }
+        if (command == "remove")
+        {
+            remove = true;
+        }
         if (command == "view")
         {
             view = true;
@@ -133,7 +152,11 @@ int main()
         if (command == "cd")
         {
             cd = true;
-        }   
+        }  
+        if (command == "create")
+        {
+            create = true;
+        }
 
         if (command == "exit")
         {
