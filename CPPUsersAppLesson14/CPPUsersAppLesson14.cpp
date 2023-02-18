@@ -26,16 +26,121 @@ namespace fs = filesystem;
 int main()
 {
     setlocale(LC_ALL, "Russian");
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    string command = "";
+    string newpath = "";
+    string buf = "";
+    fs::path p = "D:\\Илья\\testdir";
+    fs::directory_entry dir;
+    dir.assign(p);   
+    bool cd = false;
+    bool view = false;
+    bool error = false;
+    bool create = false;
+    while (true)
+    {
 
-    CreateDirectory(L"D:\\Илья\\New", NULL);
+        if (command == "")
+        { 
+            cout << "\nТекущее расположение:\n";
+            SetConsoleTextAttribute(handle, FOREGROUND_GREEN);
+            cout << p.string() << "\n";
+            SetConsoleTextAttribute(handle, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);                 
+            cout << "Список команд:\ncd {path} - сменить директорию \n";
+            cout << "view dirs - Показать подкаталоги по текущему пути\n";
+            cout << "view files - Показать файлы по текущему пути\n";
+            cout << "create {name} - Создать каталог с указанным именем по текущему пути\n";
+            cout << "exit - выход из проекта\n";
+            cout << "Введите команду:\n";  
+            cin >> command;
+        }
+        if (cd || view || create)
+        { 
+            cin >> command;
+        }
+        if (command != "cd" && !cd && !error && !view && !create && command != "view" && command != "create")
+        {
+            SetConsoleTextAttribute(handle, FOREGROUND_RED);
+            cout << "Такой команды не существует\n";
+            command = "";
+            SetConsoleTextAttribute(handle, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
+        }
+        if (error)
+        {            
+            SetConsoleTextAttribute(handle, FOREGROUND_RED);
+            cout << command << "\n";
+            command = "";
+            error = false;
+            SetConsoleTextAttribute(handle, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
+        }
+        if (view)
+        {
+            SetConsoleTextAttribute(handle, FOREGROUND_GREEN);
+            if (command == "dirs")
+            {
+                for (auto const& dir_entry : std::filesystem::directory_iterator{ dir.path()})
+                {
+                    if (!dir_entry.path().has_extension())
+                        std::cout << dir_entry.path() << '\n';
+                }
+            }
+            if (command == "files")
+            {
+                for (auto const& dir_entry : std::filesystem::directory_iterator{ dir.path() })
+                {
+                    if (dir_entry.path().has_extension())
+                        std::cout << dir_entry.path() << '\n';
+                }
+            }
+            SetConsoleTextAttribute(handle, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
+            view = false;
+            command = "";
+        }
+        if (cd)
+        {
+            newpath = command.substr(0, 1) == "{" ? command.substr(1, command.length() - 1) : command;
+            fs::path pbuf = newpath;            
+            dir.assign(pbuf);
+            if (dir.exists())
+            {
+                p = newpath;
+                command = "";               
+            }
+            else
+            {                
+                command = "Такого пути не существует";
+                error = true;
+            }
+            dir.assign(p);
+            pbuf.~path();
+            cd = false;            
+        }
+        if (create)
+        {
+            newpath = command.substr(0, 1) == "{" ? command.substr(1, command.length() - 1) : command;
+            fs::path pbuf = newpath;
+            pbuf = p / pbuf;  
+            fs::create_directory(pbuf);
+            pbuf.~path();
+            create = false;
+        }
+        if (command == "view")
+        {
+            view = true;
+        }
+        if (command == "cd")
+        {
+            cd = true;
+        }   
 
-    RemoveDirectory(L"D:\\Илья\\New");
-    
-    
+        if (command == "exit")
+        {
+            break;
+        }
 
-    /*fs::path pathToShow("D:\\task13_2_result.txt");
-    cout <<pathToShow.root_path().string() << pathToShow.relative_path().string();
-    pathToShow.filename().replace_filename("D:\\task13_2_result2.txt");*/
+    } 
         
     return 0;
 }
